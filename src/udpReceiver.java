@@ -5,18 +5,20 @@ import java.util.Arrays;
 
 public class udpReceiver extends Thread
 {
-    DatagramSocket socket;
+    DatagramSocket socket; // Hvad hedder de her
     udpPacketConverter converter;
-
-    // test reusage of objects
-    byte[] receiveData = new byte[12];
-
 
     public udpReceiver(DatagramSocket socket, udpPacketConverter converter)
     {
         this.socket = socket;
         this.converter = converter;
     }
+
+    // test reusage of objects
+    byte[] receiveData = new byte[12];
+
+
+
     @Override
     public void run() {
         while (true) // forever

@@ -5,20 +5,20 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-public class DroneSwarm {
+public class Swarm {
 
     public DatagramSocket socket; //socket is used for both sending and receiving messages
     udpReceiver receiver;
     udpPacketConverter converter;
 
     //The drones UDP port is instantiated and is a constant int
-    private int udpPort = 8889;
+    private final int udpPort = 8889;
     private boolean isConnected = false;
 
-    //The drone of drones is created
+    //The array of drones is created
     private ArrayList<TelloDrone> droneSwarm = new ArrayList<>();
 
-    public DroneSwarm() {
+    public Swarm() {
         try {
             //create socket for communication
             socket = new DatagramSocket();
@@ -26,7 +26,7 @@ public class DroneSwarm {
             e.printStackTrace();
         }
 
-        converter = new udpPacketConverter();
+        converter = new udpPacketConverter(droneSwarm);
         converter.start();
 
         receiver = new udpReceiver(socket, converter);
@@ -46,6 +46,10 @@ public class DroneSwarm {
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ip, udpPort);
             socket.send(sendPacket);
             System.out.println("send "+ command + " to " + ip.getHostAddress());
+
+            // test - missing replies from drones
+            //Thread.sleep(500);
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -56,20 +60,20 @@ public class DroneSwarm {
 
     // Starting SDK mode for the drones in the drone swarm
     public void connectAll() {
-        if (isConnected==false);
+        if (!isConnected);
         for (TelloDrone drone: droneSwarm) {
             sendCommand("command", drone.ip);
-            //Thread.sleep(500);
+            drone.setState(TelloDrone.State.OK);
         }
-
+/**
         if (isConnected == true) {
             for (TelloDrone drone: droneSwarm) {
                 drone.setState(TelloDrone.State.OK);
             }
-        }
+        }*/
     }
 
-    public boolean sendToSpecific(String command, int i) {
+    public boolean sendToSpecific(String command, InetAddress ip) {
         try {
             byte[] sendData = command.getBytes();
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length);
@@ -88,14 +92,38 @@ public class DroneSwarm {
     public void swarmState() {
 
     }
-
+        // Programmet siger unknown command
     public boolean moveAll(Direction direction, int cm)
     {
         for (TelloDrone drone: droneSwarm) {
             sendCommand("move" + direction + " " + cm, drone.ip);
+            drone.setState(TelloDrone.State.OK);
             return true;
         }
         return false;
+    }
+            // Er det her rigtigt?
+    public boolean allOk() {
+        for (TelloDrone drone : droneSwarm) {
+            if (drone.getState() != TelloDrone.State.OK && drone.getState() != TelloDrone.State.DISCONNECTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void waitForAllDronesToBeOK(Swarm swarm) {
+        while (!swarm.allOk())
+        {
+            // venter og venter - laver ingenting
+            System.out.print(".");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println();
     }
 
     //Following commands are drone actions and movements used to move the drones
@@ -121,14 +149,7 @@ public class DroneSwarm {
         }
     }
 
-    public boolean allOk() {
-        for (TelloDrone drone : droneSwarm) {
-            if (drone.getState() != TelloDrone.State.OK) {
-                return false;
-            }
-        }
-        return true;
-    }
+
 
 
 }

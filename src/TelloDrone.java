@@ -17,7 +17,7 @@ public class TelloDrone {
             this.ip = InetAddress.getByName(ip);
         }
         catch (UnknownHostException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
             System.out.println("IP address not valid!");
         }
         this.state = State.DISCONNECTED;
